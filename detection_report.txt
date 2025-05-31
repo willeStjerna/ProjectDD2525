@@ -1,0 +1,24 @@
+Encoded Script Detection Report
+================================
+
+Total detections: 1
+
+Detection #1
+File: accuracy_tests\false_negative_risks\fnr5_delayed_execution.py
+Line: 7
+Encoding: Base64
+Risk Score: 30
+Encoded Content: CmltcG9ydCB0aW1lCmltcG9ydCBvcwp0aW1lLnNsZWVwKDAuMS...
+Decoded Content: 
+import time
+import os
+time.sleep(0.1)  # Short delay
+os.system('echo "delayed attack"')
+
+Suspicious Patterns:
+  - system_calls: os\.system\s*\(
+  - Contains import statements
+  - Contains valid Python code
+
+--------------------------------------------------
+

