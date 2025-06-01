@@ -33,7 +33,10 @@ class EncodedScriptDetector:
         # Patterns for different encoding schemes
         self.base64_pattern = re.compile(r'[A-Za-z0-9+/]{20,}={0,2}')
         self.hex_pattern = re.compile(r'\\x[0-9a-fA-F]{2}|[0-9a-fA-F]{32,}')
-        self.url_encoding_pattern = re.compile(r'(?:%[0-9a-fA-F]{2}){4,}')
+
+        # REVISED: This pattern now looks for a string containing at least 4 instances of '%xx',
+        # separated by any characters. This is more flexible.
+        self.url_encoding_pattern = re.compile(r"'.*?(%[0-9a-fA-F]{2}.*?){4,}.*?'|\".*?(%[0-9a-fA-F]{2}.*?){4,}.*?\"")
         
         # Suspicious code patterns to look for in decoded content
         self.suspicious_patterns = {
@@ -80,16 +83,79 @@ class EncodedScriptDetector:
         
         return detections
     
+    def _check_comments_and_self_reading(self, file_path: str, content: str) -> List[Detection]:
+        """Check for suspicious patterns in comments and for self-reading code."""
+        detections = []
+        lines = content.splitlines()
+
+        # Heuristic 1: Analyze content within comments
+        comment_content = ""
+        for line_num, line in enumerate(lines, 1):
+            if line.strip().startswith('#'):
+                # Extract content from comment and analyze it
+                comment_text = line.strip().lstrip('#').strip()
+                # Simple check: does the comment look like encoded data or contain suspicious keywords?
+                if self.base64_pattern.search(comment_text) or 'eval(' in comment_text or 'exec(' in comment_text:
+                    detections.append(Detection(
+                        file_path=file_path,
+                        line_number=line_num,
+                        encoding_type='Steganography (Comment)',
+                        encoded_content=line[:80],
+                        decoded_content='Suspicious content found inside a code comment.',
+                        risk_score=30,
+                        suspicious_patterns=['Code or encoded data hidden in comment']
+                    ))
+
+        # Heuristic 2: Check for self-reading code
+        if "open(__file__)" in content:
+            detections.append(Detection(
+                file_path=file_path,
+                line_number=0,  # Line number isn't as relevant for this file-wide check
+                encoding_type='Suspicious Code Structure',
+                encoded_content="open(__file__)",
+                decoded_content='File reads its own source code, potentially to execute hidden content.',
+                risk_score=20,
+                suspicious_patterns=['Self-reading source file']
+            ))
+        
+        return detections
+    
     def scan_file(self, file_path: str) -> List[Detection]:
         """Scan a single Python file for encoded content"""
         detections = []
         
         try:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                lines = f.readlines()
+                content = f.read()
+                lines = content.splitlines()
         except Exception as e:
             print(f"Error reading {file_path}: {e}")
             return detections
+        
+        # NEW: Call the comment/steganography check
+        detections.extend(self._check_comments_and_self_reading(file_path, content))
+        
+        # NEW: Add a check for suspicious `exec` call patterns using AST
+        try:
+            tree = ast.parse(content)
+            for node in ast.walk(tree):
+                # Look for a call to exec()
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'exec':
+                    if node.args:
+                        # Check if the argument to exec is another function call (e.g., exec(decode(...)))
+                        first_arg = node.args[0]
+                        if isinstance(first_arg, ast.Call):
+                            detections.append(Detection(
+                                file_path=file_path,
+                                line_number=node.lineno,
+                                encoding_type='Suspicious Code Structure',
+                                encoded_content=ast.unparse(node),
+                                decoded_content='exec() called on the result of another function.',
+                                risk_score=25,
+                                suspicious_patterns=['High-risk pattern: exec(function())']
+                            ))
+        except Exception:
+            pass # Ignore parsing errors in this check
         
         for line_num, line in enumerate(lines, 1):
             # Check for different encoding patterns
@@ -236,12 +302,25 @@ class EncodedScriptDetector:
             risk_score += 5
             found_patterns.append("Contains potentially dangerous keywords")
         
-        # Check if it looks like Python code
+        # REVISED: Check if it's executable Python code, not just a literal
         try:
-            ast.parse(decoded)
-            risk_score += 15
-            found_patterns.append("Contains valid Python code")
-        except:
+            tree = ast.parse(decoded)
+            # Walk the tree to see if it contains more than just data literals
+            is_executable = False
+            for node in ast.walk(tree):
+                # Check for nodes that imply execution, like calls, imports, attribute access on a variable.
+                # Exclude simple data structures (literals).
+                if not isinstance(node, (ast.Module, ast.Expr, ast.Constant, 
+                                        ast.Dict, ast.List, ast.Tuple, ast.Set)):
+                    is_executable = True
+                    break
+            
+            if is_executable:
+                risk_score += 15
+                found_patterns.append("Contains executable Python code")
+
+        except Exception:
+            # If parsing fails, it's not valid Python code
             pass
         
         return risk_score, found_patterns
@@ -293,11 +372,7 @@ def main():
     report = detector.generate_report(detections)
     print(report)
     
-    # Save report to file
-    with open('detection_report.txt', 'w') as f:
-        f.write(report)
-    
-    print(f"\nReport saved to detection_report.txt")
+
 
 if __name__ == "__main__":
     main()

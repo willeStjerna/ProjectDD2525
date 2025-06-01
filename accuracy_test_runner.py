@@ -19,6 +19,8 @@ class AccuracyEvaluator:
             'false_positive_risks': {},
             'false_negative_risks': {}
         }
+        # Add a list to store detailed reports for aggregation
+        self.detailed_reports = []
     
     def run_all_tests(self):
         """Run detector on all test categories"""
@@ -40,6 +42,7 @@ class AccuracyEvaluator:
         
         # Generate report
         self.generate_accuracy_report()
+        self.save_aggregated_report()
     
     def test_category(self, category_dir, category_name):
         """Test all files in a category"""
@@ -58,6 +61,10 @@ class AccuracyEvaluator:
                     'detections': detections,
                     'output': result.stdout
                 }
+
+                # NEW: If detections were found, save the report for the final .txt file
+                if detections > 0:
+                    self.detailed_reports.append(result.stdout)
                 
                 print(f"{detections} detections")
                 
@@ -149,6 +156,55 @@ class AccuracyEvaluator:
         
         # Save detailed results
         self.save_detailed_results()
+    
+     # A function to write the collected reports to the file
+    def save_aggregated_report(self):
+        """Saves all collected detailed reports into a single, well-formatted file."""
+        
+        report_lines = []
+        report_lines.append("Aggregated Detection Report")
+        report_lines.append("===========================")
+        
+        # Keep track of files with detections
+        files_with_detections = []
+
+        # Iterate through all test results to find reports with detections
+        for category, files in self.results.items():
+            for filename, result in files.items():
+                if result['detections'] > 0:
+                    # Construct the full path for display
+                    full_path = os.path.join("accuracy_tests", category, filename)
+                    
+                    # Clean up the individual report: remove its header and footer
+                    output_lines = result['output'].strip().split('\n')
+                    
+                    # Find the start of the actual detection details
+                    try:
+                        # Find the first line that starts with "Detection #"
+                        start_index = next(i for i, line in enumerate(output_lines) if line.strip().startswith('Detection #'))
+                        # Get only the relevant detection details
+                        detection_details = output_lines[start_index:]
+                    except StopIteration:
+                        # If format is unexpected, skip this file for cleanup
+                        detection_details = [result['output']]
+
+                    files_with_detections.append((full_path, "\n".join(detection_details)))
+
+        if not files_with_detections:
+            report_lines.append("\nNo suspicious encoded content detected across all files.")
+        else:
+            # Sort reports by file path for consistent ordering
+            files_with_detections.sort(key=lambda x: x[0])
+            
+            for i, (path, details) in enumerate(files_with_detections):
+                report_lines.append(f"\n\n--- File: {path} ---")
+                report_lines.append(details)
+
+        # Write the cleanly formatted report to the file
+        with open("detection_report.txt", "w") as f:
+            f.write("\n".join(report_lines))
+            
+        print(f"\nAggregated detailed report with improved formatting saved to: detection_report.txt")
     
     def calculate_specific_metrics(self):
         """Calculate specific accuracy metrics"""
