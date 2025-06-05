@@ -18,11 +18,10 @@ def create_accuracy_test_suite():
         shutil.rmtree(test_dir)
     test_dir.mkdir()
     
-    # Create subdirectories
-    (test_dir / "true_positives").mkdir()    # Should be detected
-    (test_dir / "true_negatives").mkdir()    # Should NOT be detected
-    (test_dir / "false_positive_risks").mkdir()  # Legitimate code that might be flagged
-    (test_dir / "false_negative_risks").mkdir()  # Malicious code that might be missed
+    (test_dir / "true_positives").mkdir()    
+    (test_dir / "true_negatives").mkdir()   
+    (test_dir / "false_positive_risks").mkdir() 
+    (test_dir / "false_negative_risks").mkdir() 
     
     create_true_positives(test_dir / "true_positives")
     create_true_negatives(test_dir / "true_negatives")
@@ -394,7 +393,7 @@ execute()
     
     # FNR3: Custom encoding scheme
     def custom_encode(text):
-        # Simple XOR with key
+
         key = 42
         return ''.join([chr(ord(c) ^ key) for c in text])
     

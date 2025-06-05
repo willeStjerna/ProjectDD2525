@@ -12,18 +12,17 @@ import os
 
 def main():
     """Main function to execute the project workflow."""
-    
-    # --- Introduction ---
+
     print("=================================================")
     print("  Encoded Script Detection Project Workflow      ")
     print("=================================================")
     
-    # Define the scripts to be run in order
+
     detector_script = "detector.py"
     test_suite_script = "accuracy_test_suite.py"
     test_runner_script = "accuracy_test_runner.py"
     
-    # Check if necessary files exist before running
+
     required_files = [detector_script, test_suite_script, test_runner_script]
     for f in required_files:
         if not os.path.exists(f):
@@ -32,12 +31,12 @@ def main():
             sys.exit(1)
 
     try:
-        # --- Step 1: Generate the test files ---
+    
         print(f"\n[STEP 1/2] Running '{test_suite_script}' to generate test files...")
         subprocess.run([sys.executable, test_suite_script], check=True)
         print(f"[SUCCESS] Test suite created successfully.")
         
-        # --- Step 2: Run the evaluation ---
+
         print(f"\n[STEP 2/2] Running '{test_runner_script}' to evaluate the detector...")
         subprocess.run([sys.executable, test_runner_script, detector_script], check=True)
         print(f"[SUCCESS] Accuracy evaluation complete.")
@@ -50,7 +49,7 @@ def main():
         print("\n\nWorkflow interrupted by user.")
         sys.exit(1)
 
-    # --- Conclusion ---
+
     print("\n=================================================")
     print("  Project workflow finished successfully!        ")
     print("=================================================")

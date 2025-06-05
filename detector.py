@@ -30,15 +30,13 @@ class EncodedScriptDetector:
     """Main detector class for finding encoded scripts"""
     
     def __init__(self):
-        # Patterns for different encoding schemes
+       
         self.base64_pattern = re.compile(r'[A-Za-z0-9+/]{20,}={0,2}')
-        self.hex_pattern = re.compile(r'\\x[0-9a-fA-F]{2}|[0-9a-fA-F]{32,}')
+        #self.hex_pattern = re.compile(r'\\x[0-9a-fA-F]{2}|[0-9a-fA-F]{32,}')
 
-        # REVISED: This pattern now looks for a string containing at least 4 instances of '%xx',
-        # separated by any characters. This is more flexible.
+        # This pattern now looks for a string containing at least 4 instances of '%xx', separated by any characters. 
         self.url_encoding_pattern = re.compile(r"'.*?(%[0-9a-fA-F]{2}.*?){4,}.*?'|\".*?(%[0-9a-fA-F]{2}.*?){4,}.*?\"")
-        
-        # Suspicious code patterns to look for in decoded content
+ 
         self.suspicious_patterns = {
             'system_calls': [
                 r'os\.system\s*\(',
@@ -88,11 +86,10 @@ class EncodedScriptDetector:
         detections = []
         lines = content.splitlines()
 
-        # Heuristic 1: Analyze content within comments
+        #  Analyze content within comments
         comment_content = ""
         for line_num, line in enumerate(lines, 1):
             if line.strip().startswith('#'):
-                # Extract content from comment and analyze it
                 comment_text = line.strip().lstrip('#').strip()
                 # Simple check: does the comment look like encoded data or contain suspicious keywords?
                 if self.base64_pattern.search(comment_text) or 'eval(' in comment_text or 'exec(' in comment_text:
@@ -106,11 +103,11 @@ class EncodedScriptDetector:
                         suspicious_patterns=['Code or encoded data hidden in comment']
                     ))
 
-        # Heuristic 2: Check for self-reading code
+        # Check for self-reading code
         if "open(__file__)" in content:
             detections.append(Detection(
                 file_path=file_path,
-                line_number=0,  # Line number isn't as relevant for this file-wide check
+                line_number=0, 
                 encoding_type='Suspicious Code Structure',
                 encoded_content="open(__file__)",
                 decoded_content='File reads its own source code, potentially to execute hidden content.',
@@ -132,17 +129,15 @@ class EncodedScriptDetector:
             print(f"Error reading {file_path}: {e}")
             return detections
         
-        # NEW: Call the comment/steganography check
         detections.extend(self._check_comments_and_self_reading(file_path, content))
         
-        # NEW: Add a check for suspicious `exec` call patterns using AST
         try:
             tree = ast.parse(content)
             for node in ast.walk(tree):
                 # Look for a call to exec()
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'exec':
                     if node.args:
-                        # Check if the argument to exec is another function call (e.g., exec(decode(...)))
+                        # Check if the argument to exec is another function call 
                         first_arg = node.args[0]
                         if isinstance(first_arg, ast.Call):
                             detections.append(Detection(
@@ -155,10 +150,9 @@ class EncodedScriptDetector:
                                 suspicious_patterns=['High-risk pattern: exec(function())']
                             ))
         except Exception:
-            pass # Ignore parsing errors in this check
+            pass 
         
         for line_num, line in enumerate(lines, 1):
-            # Check for different encoding patterns
             detections.extend(self._check_base64(file_path, line_num, line))
             detections.extend(self._check_hex_encoding(file_path, line_num, line))
             detections.extend(self._check_url_encoding(file_path, line_num, line))
@@ -172,10 +166,8 @@ class EncodedScriptDetector:
         
         for match in matches:
             try:
-                # Attempt to decode Base64
                 decoded = base64.b64decode(match).decode('utf-8', errors='ignore')
-                
-                # Skip if decoded content is too short or looks like random data
+               
                 if len(decoded) < 10 or not any(c.isalpha() for c in decoded):
                     continue
                 
@@ -192,7 +184,7 @@ class EncodedScriptDetector:
                         suspicious_patterns=suspicious_patterns
                     ))
             except Exception:
-                # If decoding fails, it might not be Base64 or might be binary
+                
                 continue
         
         return detections
@@ -201,7 +193,6 @@ class EncodedScriptDetector:
         """Check for hex encoded content"""
         detections = []
         
-        # Check for \x hex encoding
         hex_matches = re.findall(r'((?:\\x[0-9a-fA-F]{2})+)', line)
         for match in hex_matches:
             try:
@@ -293,7 +284,7 @@ class EncodedScriptDetector:
                     risk_score += 10
                     found_patterns.append(f"{category}: {pattern}")
         
-        # Additional checks
+   
         if 'import' in decoded.lower() and len(decoded) > 50:
             risk_score += 5
             found_patterns.append("Contains import statements")
@@ -301,15 +292,11 @@ class EncodedScriptDetector:
         if any(keyword in decoded.lower() for keyword in ['download', 'upload', 'delete', 'remove']):
             risk_score += 5
             found_patterns.append("Contains potentially dangerous keywords")
-        
-        # REVISED: Check if it's executable Python code, not just a literal
+ 
         try:
             tree = ast.parse(decoded)
-            # Walk the tree to see if it contains more than just data literals
             is_executable = False
             for node in ast.walk(tree):
-                # Check for nodes that imply execution, like calls, imports, attribute access on a variable.
-                # Exclude simple data structures (literals).
                 if not isinstance(node, (ast.Module, ast.Expr, ast.Constant, 
                                         ast.Dict, ast.List, ast.Tuple, ast.Set)):
                     is_executable = True
@@ -320,7 +307,7 @@ class EncodedScriptDetector:
                 found_patterns.append("Contains executable Python code")
 
         except Exception:
-            # If parsing fails, it's not valid Python code
+    
             pass
         
         return risk_score, found_patterns
@@ -334,7 +321,6 @@ class EncodedScriptDetector:
         report += f"================================\n\n"
         report += f"Total detections: {len(detections)}\n\n"
         
-        # Sort by risk score (highest first)
         detections.sort(key=lambda x: x.risk_score, reverse=True)
         
         for i, detection in enumerate(detections, 1):
